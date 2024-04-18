@@ -61,10 +61,10 @@
         $('#loading').show();
 
         // Reemplaza con tu función para obtener el token
-        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IldTTTRGIiwibmJmIjoxNzEzNDc4MzI4LCJleHAiOjE3MTM0NzgzODgsImlhdCI6MTcxMzQ3ODMyOCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo0NDM4NiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDQzODYifQ.ccjwgbvMEy-NRSVdqMzvsN_rs8hpziD-Om7heSkmzUs";
+        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IldTTTRGIiwibmJmIjoxNzEzNDgwMDQ1LCJleHAiOjE3MTM0ODAxMDUsImlhdCI6MTcxMzQ4MDA0NSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo0NDM4NiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDQzODYifQ.huzbMjL_Y8uzbqcy6Do9maprWEZmaD15Wyu0lSB_xQ4";
 
         $.ajax({
-            url: 'https://localhost:44386/api/cliente/ObtenerPorDocumento?documento=' + encodeURIComponent(documento),
+            url: 'https://aaec-181-176-116-93.ngrok-free.app/api/cliente/ObtenerPorDocumento?documento=' + encodeURIComponent(documento),
             type: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token
