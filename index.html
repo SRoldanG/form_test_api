@@ -45,46 +45,81 @@
 <img id="loading" src="loading.gif" alt="Cargando..."/> <!-- Asegúrate de tener un GIF de carga con el nombre loading.gif -->
 
 <script>
+
+    // Este es el endpoint de tu API para autenticación
+    const AUTH_ENDPOINT = 'https://aaec-181-176-116-93.ngrok-free.app/api/login/authenticate';
+
+    // Estos son ejemplos de credenciales, debes obtenerlas de manera segura
+    const USERNAME = 'WSM4F';
+    const PASSWORD = '=6O%Hi@Dyu';
+
+    // Función para autenticar y obtener el token
+    function autenticar() {
+        return fetch(AUTH_ENDPOINT, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username: USERNAME, password: PASSWORD })
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Falló la autenticación');
+                return response.json();
+            })
+            .then(data => {
+                // Aquí asumimos que el endpoint devuelve un objeto que contiene el token en la propiedad 'token'
+                return data.token;
+            });
+    }
+
     $(document).ready(function() {
         $('#btnObtener').on('click', function() {
             var documento = $('#documento').val();
             if (documento) {
-                obtenerDatos(documento);
+                // Primero autenticamos para obtener el token
+                autenticar().then(token => {
+                    // Ahora usamos el token para obtener los datos
+                    obtenerDatos(documento, token);
+                }).catch(error => {
+                    console.error('Error en la autenticación:', error);
+                });
             } else {
                 alert('Por favor, ingrese el documento.');
             }
         });
     });
 
-    function obtenerDatos(documento) {
-        // Mostrar icono de carga
+    function obtenerDatos(documento, token) {
+        // Asumimos que este es el endpoint de tu API para obtener los datos
+        const DATA_ENDPOINT = 'https://aaec-181-176-116-93.ngrok-free.app/api/cliente/ObtenerPorDocumento';
+
         $('#loading').show();
 
-        // Reemplaza con tu función para obtener el token
-        var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IldTTTRGIiwibmJmIjoxNzEzNDgwMDQ1LCJleHAiOjE3MTM0ODAxMDUsImlhdCI6MTcxMzQ4MDA0NSwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo0NDM4NiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDQzODYifQ.huzbMjL_Y8uzbqcy6Do9maprWEZmaD15Wyu0lSB_xQ4";
-
-        $.ajax({
-            url: 'https://aaec-181-176-116-93.ngrok-free.app/api/cliente/ObtenerPorDocumento?documento=' + encodeURIComponent(documento),
-            type: 'GET',
+        fetch(DATA_ENDPOINT + '?documento=' + encodeURIComponent(documento), {
+            method: 'GET',
             headers: {
                 'Authorization': 'Bearer ' + token
-            },
-            success: function(response) {
-                var data = JSON.parse(response);
+            }
+        })
+            .then(response => {
+                if (!response.ok) throw new Error('Error al obtener los datos');
+                return response.json();
+            })
+            .then(data => {
                 $('#nombres').val(data.Nombres || '');
                 $('#primer_apellido').val(data.Onetoone_apellidopaterno || '');
                 $('#segundo_apellido').val(data.Onetoone_apellidomaterno || '');
                 $('#correo').val(data.Email || '');
                 $('#celular').val(data.MobilePhone || '');
-                $('#loading').hide(); // Ocultar icono de carga cuando la solicitud se completa
-            },
-            error: function(err) {
-                alert('Error al obtener los datos: ' + err.responseText);
-                $('#loading').hide(); // Ocultar icono de carga si hay un error
-            }
-        });
+                $('#loading').hide();
+            })
+            .catch(error => {
+                alert('Error al obtener los datos: ' + error.message);
+                $('#loading').hide();
+            });
     }
 </script>
 
 </body>
 </html>
+
