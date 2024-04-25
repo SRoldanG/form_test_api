@@ -26,10 +26,10 @@
     <input type="text" id="nombres" name="nombres" readonly>
     <br>
     <label for="primer_apellido">Apellido paterno:</label>
-    <input type="text" id="primer_apellido" name="primer_apellido" readonly>
+    <input type="text" id="primer_apellido" name="primer_apellido" readonly data-val="true">
     <br>
     <label for="segundo_apellido">Apellido materno:</label>
-    <input type="text" id="segundo_apellido" name="segundo_apellido" readonly>
+    <input type="text" id="segundo_apellido" name="segundo_apellido" readonly data-val="true">
     <br>
     <label for="correo">Correo:</label>
     <input type="email" id="correo" name="correo" readonly>
@@ -38,53 +38,141 @@
     <input type="tel" id="celular" name="celular" readonly>
     <br>
     <button type="button" id="btnObtener">Obtener Datos</button>
+
+    <label for="contratos">Números de Contrato:</label>
+    <select id="contratos" name="contratos" disabled onchange="mostrarProductoAsociado();">
+        <!-- Las opciones se llenarán dinámicamente con JavaScript -->
+    </select>
+
+
+    <br>
+    <label for="producto">Producto:</label>
+    <input type="text" id="producto" name="producto" readonly>
+    <br>
+    <button type="button" id="btnObtenerContratos">Obtener Contratos</button>
+
+
+
 </form>
 
 <img id="loading" src="loading.gif" alt="Cargando..."/>
 
 <script>
-    // Asumimos que este es el token que has obtenido previamente
-    const TOKEN_FIJO = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IldTTTRGIiwibmJmIjoxNzE0MDA0MDg0LCJleHAiOjE3MTQwMDUyODQsImlhdCI6MTcxNDAwNDA4NCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo0NDM4NiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDQzODYifQ.bnjLoXKfXqAi4Jh_CnBUis2tXYTxafQdKKrFdBcOX9M';
-
     $(document).ready(function() {
         $('#btnObtener').on('click', function() {
             var documento = $('#documento').val();
             if (documento) {
-                obtenerDatos(documento, TOKEN_FIJO);
+                obtenerDatos(documento);
             } else {
                 alert('Por favor, ingrese el documento.');
             }
         });
+        // Manejador para obtener los contratos
+        $('#btnObtenerContratos').on('click', function() {
+            var documento = $('#documento').val();
+            if (documento) {
+                obtenerContratos(documento);
+            } else {
+                alert('Por favor, ingrese el documento para contratos.');
+            }
+        });
     });
 
-    function obtenerDatos(documento, token) {
-        const DATA_ENDPOINT = 'https://mafperu.com.pe/wa_experiencia_crm/api/cliente/ObtenerPorDocumento';
+    function obtenerDatos(documento) {
+        const CLIENTE_ENDPOINT = 'https://maf-middleware-crm-5bfe3dbc217d.herokuapp.com/cliente/' + encodeURIComponent(documento);
 
         $('#loading').show();
 
-        fetch(DATA_ENDPOINT + '?documento=' + encodeURIComponent(documento), {
-            method: 'GET',
-            headers: {
-                'Authorization': 'Bearer ' + token
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Error al obtener los datos');
-            return response.json();
-        })
-        .then(data => {
-            $('#nombres').val(data.Primer_nombre || '');
-            $('#primer_apellido').val(data.Apellido_paterno || '');
-            $('#segundo_apellido').val(data.Apellido_materno || '');
-            $('#correo').val(data.Email || '');
-            $('#celular').val(data.Telefono || '');
-            $('#loading').hide();
-        })
-        .catch(error => {
-            alert('Error al obtener los datos: ' + error.message);
-            $('#loading').hide();
-        });
+        fetch(CLIENTE_ENDPOINT)
+            .then(response => {
+                if (!response.ok) throw new Error('Error al obtener los datos del cliente');
+                return response.json();
+            })
+            .then(data => {
+                // Si no se encuentra la información del cliente, habilitar los campos y limpiarlos
+                if (!data || data.length === 0 || (data.Tipo !== 'Empresa' && !data.Primer_nombre)) {
+                    $('#nombres, #primer_apellido, #segundo_apellido, #correo, #celular').val('').prop('readonly', false);
+                    $('#loading').hide();
+                    return;
+                }
+
+                console.log('Datos obtenidos:', data);
+
+                // Comprobar si es empresa o persona y asignar los datos
+                if (data.Tipo === 'Empresa') {
+                    $('#nombres').val(data.Nombre || '').prop('readonly', true);
+                    $('#primer_apellido').val('.').prop('readonly', true);
+                    $('#segundo_apellido').val('.').prop('readonly', true);
+                } else { // Es una persona
+                    $('#nombres').val((data.Primer_nombre || '') + ' ' + (data.Segundo_nombre || '')).prop('readonly', true);
+                    $('#primer_apellido').val(data.Apellido_paterno || '').prop('readonly', true);
+                    $('#segundo_apellido').val(data.Apellido_materno || '').prop('readonly', true);
+                }
+
+                // Dejar correo y celular editables siempre
+                $('#correo').val(data.Email || '').prop('readonly', false);
+                $('#celular').val(data.Telefono || '').prop('readonly', false);
+                $('#loading').hide();
+            })
+            .catch(error => {
+                console.error('Error al obtener los datos: ', error);
+                $('#nombres, #primer_apellido, #segundo_apellido').val('').prop('readonly', true);
+                $('#correo, #celular').val('').prop('readonly', false);
+                $('#loading').hide();
+                alert('Error al obtener los datos: ' + error.message);
+            });
     }
+
+
+
+    var contratosData = {};
+
+    function obtenerContratos(documento) {
+        const CONTRATO_ENDPOINT = 'https://maf-middleware-crm-5bfe3dbc217d.herokuapp.com/contrato/' + encodeURIComponent(documento);
+
+        $('#loading').show();
+
+        fetch(CONTRATO_ENDPOINT)
+            .then(response => {
+                if (!response.ok) throw new Error('Error al obtener los contratos');
+                return response.json();
+            })
+            .then(data => {
+                const contratosSelect = $('#contratos');
+                contratosSelect.empty(); // Limpiar opciones anteriores
+                contratosSelect.prop('disabled', true); // Deshabilitar el select por defecto
+                $('#producto').val('').prop('readonly', true); // Limpiar y deshabilitar producto
+
+                // Verificar si se recibieron datos
+                if (data && data.length > 0) {
+                    // Almacenamos los datos de los contratos
+                    contratosData = {};
+                    data.forEach(contrato => {
+                        contratosData[contrato.NumeroContrato] = contrato.Producto;
+                        contratosSelect.append(new Option(contrato.NumeroContrato, contrato.NumeroContrato));
+                    });
+                    contratosSelect.prop('disabled', false); // Habilitar el select si hay contratos
+                    contratosSelect.change(); // Esto desencadenará la función mostrarProductoAsociado para el primer contrato
+                }
+
+                $('#loading').hide();
+            })
+            .catch(error => {
+                console.error('Error al obtener los contratos: ', error);
+                $('#loading').hide();
+                //alert('Error al obtener los contratos: ' + error.message);
+            });
+    }
+
+
+
+    function mostrarProductoAsociado() {
+        // Obtenemos el valor actual del select de contratos
+        var numeroContrato = $('#contratos').val();
+        var productoAsociado = contratosData[numeroContrato] || 'No disponible';
+        $('#producto').val(productoAsociado);
+    }
+
 </script>
 
 </body>
