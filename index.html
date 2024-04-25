@@ -19,8 +19,6 @@
 <h1>Formulario de prueba para API</h1>
 
 <form id="formulario">
-
-
     <label for="documento">Documento:</label>
     <input type="text" id="documento" name="documento" required>
     <br>
@@ -42,47 +40,17 @@
     <button type="button" id="btnObtener">Obtener Datos</button>
 </form>
 
-<img id="loading" src="loading.gif" alt="Cargando..."/> <!-- Asegúrate de tener un GIF de carga con el nombre loading.gif -->
+<img id="loading" src="loading.gif" alt="Cargando..."/>
 
 <script>
-
-    // Este es el endpoint de tu API para autenticación
-    const AUTH_ENDPOINT = 'https://mafperu.com.pe/wa_experiencia_crm/api/login/authenticate';
-
-    // Estos son ejemplos de credenciales, debes obtenerlas de manera segura
-    const USERNAME = 'WSM4F';
-    const PASSWORD = '=6O%Hi@Dyu';
-
-    // Función para autenticar y obtener el token
-    function autenticar() {
-        return fetch(AUTH_ENDPOINT, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username: USERNAME, password: PASSWORD })
-        })
-            .then(response => {
-                if (!response.ok) throw new Error('Falló la autenticación');
-                return response.json();
-            })
-            .then(data => {
-                // Aquí asumimos que el endpoint devuelve un objeto que contiene el token en la propiedad 'token'
-                return data.token;
-            });
-    }
+    // Asumimos que este es el token que has obtenido previamente
+    const TOKEN_FIJO = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6IldTTTRGIiwibmJmIjoxNzE0MDA0MDg0LCJleHAiOjE3MTQwMDUyODQsImlhdCI6MTcxNDAwNDA4NCwiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo0NDM4NiIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6NDQzODYifQ.bnjLoXKfXqAi4Jh_CnBUis2tXYTxafQdKKrFdBcOX9M';
 
     $(document).ready(function() {
         $('#btnObtener').on('click', function() {
             var documento = $('#documento').val();
             if (documento) {
-                // Primero autenticamos para obtener el token
-                autenticar().then(token => {
-                    // Ahora usamos el token para obtener los datos
-                    obtenerDatos(documento, token);
-                }).catch(error => {
-                    console.error('Error en la autenticación:', error);
-                });
+                obtenerDatos(documento, TOKEN_FIJO);
             } else {
                 alert('Por favor, ingrese el documento.');
             }
@@ -90,7 +58,6 @@
     });
 
     function obtenerDatos(documento, token) {
-        // Asumimos que este es el endpoint de tu API para obtener los datos
         const DATA_ENDPOINT = 'https://mafperu.com.pe/wa_experiencia_crm/api/cliente/ObtenerPorDocumento';
 
         $('#loading').show();
@@ -101,25 +68,24 @@
                 'Authorization': 'Bearer ' + token
             }
         })
-            .then(response => {
-                if (!response.ok) throw new Error('Error al obtener los datos');
-                return response.json();
-            })
-            .then(data => {
-                $('#nombres').val(data.Primer_nombre || '');
-                $('#primer_apellido').val(data.Apellido_paterno || '');
-                $('#segundo_apellido').val(data.Apellido_materno || '');
-                $('#correo').val(data.Email || '');
-                $('#celular').val(data.Telefono || '');
-                $('#loading').hide();
-            })
-            .catch(error => {
-                alert('Error al obtener los datos: ' + error.message);
-                $('#loading').hide();
-            });
+        .then(response => {
+            if (!response.ok) throw new Error('Error al obtener los datos');
+            return response.json();
+        })
+        .then(data => {
+            $('#nombres').val(data.Primer_nombre || '');
+            $('#primer_apellido').val(data.Apellido_paterno || '');
+            $('#segundo_apellido').val(data.Apellido_materno || '');
+            $('#correo').val(data.Email || '');
+            $('#celular').val(data.Telefono || '');
+            $('#loading').hide();
+        })
+        .catch(error => {
+            alert('Error al obtener los datos: ' + error.message);
+            $('#loading').hide();
+        });
     }
 </script>
 
 </body>
 </html>
-
